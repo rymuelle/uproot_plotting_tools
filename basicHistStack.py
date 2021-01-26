@@ -2,7 +2,7 @@ import numpy as np
 import uproot
 from uproot_plotting_tools.utils import get_hist_uproot, hist_integral_and_error
 
-class basic_hist_stack:
+class basicHistStack:
     def __init__(self,name,td_dict={},sys_list=[],blinded=True):
         self.SR = 'SR' in name
         self.name = name
@@ -41,8 +41,10 @@ class basic_hist_stack:
             self.add(type_string,label,hist,sys_array_list=sys_array_list,kwargs=kwargs)
     def set_bins(self,bins):
         self.bins = bins
-        self.bin_centers = np.asarray([(low+high)/2 for low,high in self.bins])
         self.nBins = len(self.bins)
+        self.bin_edges = [bins[i][0] for i in range(self.nBins)]
+        self.bin_edges.append(bins[self.nBins-1][1])
+        self.bin_centers = np.asarray([(low+high)/2 for low,high in self.bins])
     def add(self,type_string,hlabel,hist,sys_array_list=[],kwargs={}):
         bins,values,var = hist['bins'],hist['values'],hist['var']
         nBins = len(bins)
@@ -95,6 +97,6 @@ class basic_hist_stack:
         var_list = np.sum(var_list,axis=0)
         sys_list = np.sum(sys_list,axis=0)
         std_list = var_list ** .5
-        return value_list, std_list,[sys_list[0]+value_list,sys_list[1]+value_list]
+        return value_list, std_list,[sys_list[0],sys_list[1]]
      
     
