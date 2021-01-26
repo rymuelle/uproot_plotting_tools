@@ -1,19 +1,6 @@
 import numpy as np
 import uproot
-
-def getHistUproot(uproot_dir, hname, overflow=False):
-    hist = uproot_dir[hname] 
-    if overflow:
-        bins = hist.allbins
-        values = hist.allvalues
-        var = hist.allvariances
-    else:
-        bins = hist.bins
-        values = hist.values
-        var = hist.variances
-    return {"bins":bins, "values":values, "var":var}
-
-def hist_integral_and_error(x): return (np.sum(x['values']), np.sum(x['var']) ** .5)
+from uproot_plotting_tools.utils import get_hist_uproot, hist_integral_and_error
 
 class basic_hist_stack:
     def __init__(self,name,td_dict={},sys_list=[],blinded=True):
@@ -31,7 +18,7 @@ class basic_hist_stack:
             label  = td_dict[td_string]['label']
             kwargs  = td_dict[td_string]['kwargs']
             # get nominal hist and set bins
-            hist = getHistUproot(td, self.name)
+            hist = get_hist_uproot(td, self.name)
             if i == 0: self.set_bins(hist['bins'])
             # don't fill data in SR if blinded, don't look for weights for data
             if self.SR and self.blinded and 'data' in type_string:
@@ -45,7 +32,7 @@ class basic_hist_stack:
             sys_down = self.zero_array()
             if sys_list and not 'data' in type_string:
                 for sys in sys_list:
-                    sys_temp = getHistUproot(td, sys)
+                    sys_temp = get_hist_uproot(td, sys)
                     sys_delta = np.subtract(sys_temp['values'], hist['values'])
                     sys_delta_sum = np.sum(sys_delta)
                     if sys_delta_sum>0: sys_up += sys_delta
