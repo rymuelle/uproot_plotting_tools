@@ -43,7 +43,11 @@ class mplStackPlot:
             "label":self.labels
         }
         hep.histplot(*args, **kwargs_l, **kwargs)
-        if draw_sys: 
-            for nom,sys,col in zip(self.y_list,self.y_list_sys,self.colors):
-                plt.fill_between(self.bin_center,sys[0]+nom,sys[1]+nom, alpha=.5,color=col)
+        if draw_sys:
+            if 'stack' in kwargs:
+                if kwargs['stack']:
+                    plt.fill_between(self.bin_center,self.y_sum_list_sys[0]+self.y_sum,self.y_sum_list_sys[1]+self.y_sum, alpha=.5,color='grey') 
+            else:
+                for nom,sys,col in zip(self.y_list,self.y_list_sys,self.colors):
+                    plt.fill_between(self.bin_center,sys[0]+nom,sys[1]+nom, alpha=.5,color=col)
         plt.legend()
