@@ -10,7 +10,7 @@ import uproot
 # systematics are added linearly
 # systematic histograms are assumed to be non relative to nom value
 class basicHistogram1D:
-    def __init__(self,name,bin_edges,bin_values=[],bin_std=[],sys_values=[],plot_kwargs={},category=None):
+    def __init__(self,name,bin_edges,bin_values=[],bin_std=[],sys_values=[],plot_kwargs={},category=None,blinded=True):
         self.name = name
         self.category = category #typically, background, signal, data etc...
         self.plot_kwargs = plot_kwargs
@@ -29,9 +29,6 @@ class basicHistogram1D:
         if self.has_sys:
             for sys in sys_values:
                 self.add_sys(sys)
-    def set_default(self,key,default):
-        if key not in self.plot_kwargs: return default
-        return self.plot_kwargs[key]
     @classmethod
     def from_uproot(cls,name,uproot_hist,uproot_sys=[],plot_kwargs={},category=None):
         bin_edges,values,std = cls.get_hist_uproot(cls,uproot_hist)
@@ -40,7 +37,12 @@ class basicHistogram1D:
             _,sys_value,_ = cls.get_hist_uproot(cls,sys)
             sys_list.append(sys_value)
         return cls(name,bin_edges,bin_values=values,bin_std=std,sys_values=sys_list,plot_kwargs=plot_kwargs,category=category)
-    
+    @property
+    def check_sys(self):
+        return np.sum(np.abs(self.sys_up) + np.abs(self.sys_down)) > 0
+    def set_default(self,key,default):
+        if key not in self.plot_kwargs: return default
+        return self.plot_kwargs[key]    
     @property
     def bin_variance(self):
         return self.bin_std ** 2
@@ -74,14 +76,22 @@ class basicHistogram1D:
         return bin_edges, values, std
     def sum_and_error(self): 
         return np.sum(self.bin_values), np.sum(self.bin_variance) ** .5
-    def plot(self,kwargs={},error_bars=True, draw_sys=True):
+    def plot(self,kwargs={},error_bars=True, draw_sys=True, label=False):
         args = [self.bin_values,self.bin_edges]
         if error_bars: self.plot_kwargs['yerr'] = self.bin_std
-        hep.histplot(*args, **self.plot_kwargs, **kwargs)    
-        if self.has_sys and draw_sys:
+        
+        self.tmp_kwargs = {**self.plot_kwargs,**kwargs}
+        if not label: self.tmp_kwargs.pop("label",None)
+        hep.histplot(*args, **self.tmp_kwargs) 
+    def plot_sys(self,kwargs={}):
+        if self.check_sys:
             self.sys_up_block = self.double_list(self.sys_up+self.bin_values)
             self.sys_down_block = self.double_list(self.sys_down+self.bin_values)
-            plt.fill_between(self.block_bins,self.sys_up_block,self.sys_down_block, alpha=.3,color=self.color)
+            self.tmp_kwargs = {"alpha":.3,"color":self.color,**kwargs}
+            if "ax" in  self.tmp_kwargs:
+                self.tmp_kwargs.pop("ax",None)
+                kwargs['ax'].fill_between(self.block_bins,self.sys_up_block,self.sys_down_block, **self.tmp_kwargs)
+            else: plt.fill_between(self.block_bins,self.sys_up_block,self.sys_down_block, **self.tmp_kwargs)
     #this allows for nice blocky plotting of systematics
     def double_list(self,l_list):
         output = []
@@ -103,6 +113,19 @@ class basicHistogram1D:
             self.category = bh1d.category
             self.plot_kwargs = bh1d.plot_kwargs
             self.color = bh1d.color
+            self.label = bh1d.label
+    def divide(self, bh1d):
+        assert self.shares_bins(bh1d), "Bin alignment error!"
+        denom =  bh1d.bin_values
+        self.bin_values = self.bin_values/denom
+        self.bin_std = self.bin_std/denom
+        self.sys_up = self.sys_up/denom
+        self.sys_down = self.sys_down/denom
+    def scale(self,factor):
+        self.bin_values = factor*self.bin_values
+        self.bin_std = factor*self.bin_std
+        self.sys_up = factor*self.sys_up
+        self.sys_down = factor*self.sys_down
     def shares_bins(self,bh1d):
         return self.bin_edges == bh1d.bin_edges
 
@@ -133,7 +156,8 @@ if __name__=="__main__":
     assert close_enough(test_hist.bin_std,[4.24264069, 5.65685425])
     assert close_enough(test_hist.sys_down,[-2.,  0.])
 
-    test_hist.plot()
+    test_hist.plot(label=True)
+    test_hist.plot_sys()
     test_hist_no_unc.plot(kwargs={"histtype":"fill", "alpha":.5})
     test_hist.bin_std, test_hist_no_unc.bin_std
     plt.legend()
