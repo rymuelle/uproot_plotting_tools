@@ -21,39 +21,40 @@ class basicHistogram1D:
         self.bin_edges = bin_edges
         self.n_bins = len(bin_edges) - 1
         #set bin values
-        if bin_values: 
-            assert (len(bin_values) == self.n_bins), "Bin values must have same length as bins!"
-            self.bin_values = np.asarray(bin_values)
-        else: self.bin_values = self.zero_array()
-        #set bin standard deviation
-        if bin_std: 
-            assert (len(bin_std) == self.n_bins), "Bin std must have same length as bins!"
-            self.bin_std = np.asarray(bin_std)
-        else: self.bin_std = self.zero_array()
-        self.has_sys = bool(sys_values)
+        self.bin_values = self.check_value(bin_values)
+        self.bin_std = self.check_value(bin_std)
+        #add in sys
+        self.has_sys = len(sys_values) > 0
         #only computer systematics if bin has set values
-        if bin_values and self.has_sys:
+        if self.has_sys:
             self.sys_up = self.zero_array()
             self.sys_down = self.zero_array()
             for sys in sys_values:
                 self.add_sys(sys)
     @classmethod
-    def from_uproot(cls,name,uproot_hist,uproot_sys=[],plot_kwargs={}):
-        bins,values,std = self.get_hist_uproot(uproot_hist)
+    def from_uproot(cls,name,uproot_hist,uproot_sys=[],plot_kwargs={},category=None):
+        bin_edges,values,std = cls.get_hist_uproot(cls,uproot_hist)
         sys_list = []
         for sys in uproot_sys:
-            _,sys_value,_ = self.get_hist_uproot(uproot_hist)
+            _,sys_value,_ = cls.get_hist_uproot(cls,sys)
             sys_list.append(sys_value)
-        return cls(name,bin_edges,bin_values=values,bin_std=std,sys_hists=sys_list,plot_kwargs=plot_kwargs)
+        return cls(name,bin_edges,bin_values=values,bin_std=std,sys_values=sys_list,plot_kwargs=plot_kwargs,category=category)
+    
     @property
     def bin_variance(self):
         return self.bin_std ** 2
     @bin_variance.setter
     def bin_variance(self,var):
-        self.bin_std = var ** .5
+        self.bin_std = self.check_value(var) ** .5  
     @property
     def bin_center(self):
         return [(self.bin_edges[i]+self.bin_edges[i+1])/2. for i in range(self.n_bins)]
+
+    def check_value(self,value):
+        if len(value)!=0: 
+            assert (len(value) == self.n_bins), "Bin values must have same length as bins!"
+            return np.asarray(value)
+        return self.zero_array()    
     def add_sys(self,sys_values):
         sys_array = np.asarray(sys_values)
         sys_delta = sys_array - self.bin_values
@@ -62,15 +63,15 @@ class basicHistogram1D:
         self.has_sys = True
     def zero_array(self):
         return  np.full(self.n_bins,0.)   
-    def get_hist_uproot(self,uproot_hist):
-        hist = uproot_dir[hname] 
+    def get_hist_uproot(self,hist):
         bins = hist.bins
-        bin_edges = [bins[i][0] for i in range(len(bins)-1)] #converts from 2D list to 1D edges list
+        bin_edges = [bins[i][0] for i in range(len(bins))] #converts from 2D list to 1D edges list
+        bin_edges.append(bins[-1][1])
         values = hist.values
         var = hist.variances
         std = var ** .5
-        return bins, values, std
-    def hist_sum_and_error(self): 
+        return bin_edges, values, std
+    def sum_and_error(self): 
         return np.sum(self.bin_values), np.sum(self.bin_variance) ** .5
     def plot(self,kwargs={},error_bars=True, draw_sys=True):
         args = [self.bin_values,self.bin_edges]
