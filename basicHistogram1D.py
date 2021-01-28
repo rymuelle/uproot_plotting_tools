@@ -10,8 +10,9 @@ import uproot
 # systematics are added linearly
 # systematic histograms are assumed to be non relative to nom value
 class basicHistogram1D:
-    def __init__(self,name,bin_edges,bin_values=[],bin_std=[],sys_values=[],plot_kwargs={}):
+    def __init__(self,name,bin_edges,bin_values=[],bin_std=[],sys_values=[],plot_kwargs={},category=None):
         self.name = name
+        self.category = category #typically, background, signal, data etc...
         self.plot_kwargs = plot_kwargs
         if 'color' in self.plot_kwargs:
             self.color = self.plot_kwargs['color']
@@ -91,11 +92,13 @@ class basicHistogram1D:
     def block_bins(self):
         return self.double_list(self.bin_edges)[1:-1]
     def add(self,bh1d):
-        assert self.bin_edges == bh1d.bin_edges, "Bin alignment error!"
+        assert self.shares_bins(bh1d), "Bin alignment error!"
         self.bin_values += bh1d.bin_values
         self.bin_variance += bh1d.bin_variance
         self.sys_up += bh1d.sys_up
         self.sys_down += bh1d.sys_down
+    def shares_bins(self,bh1d):
+        return self.bin_edges == bh1d.bin_edges
 
 if __name__=="__main__":
 
