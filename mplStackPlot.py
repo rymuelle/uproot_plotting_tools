@@ -1,6 +1,7 @@
 import sys
 sys.path.append('./src')
 from uproot_plotting_tools.basicHistogram1D import basicHistogram1D
+from uproot_plotting_tools.utils import safe_divide
 import numpy as np
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
@@ -81,9 +82,10 @@ class mplStackPlot:
         axs[1].errorbar(ratio_data.bin_center,ratio_data.bin_values,yerr=ratio_data.bin_std, linestyle="", marker="o", color="black", label="data")   
         
         blk_values = sum_bck.double_list(sum_bck.bin_values)
-        blk_std = sum_bck.double_list(sum_bck.bin_std)/blk_values
-        sys_up = sum_bck.double_list(sum_bck.sys_up)/blk_values + 1
-        sys_down = sum_bck.double_list(sum_bck.sys_down)/blk_values +1
+        blk_std = safe_divide(sum_bck.double_list(sum_bck.bin_std),blk_values)
+        sys_up = safe_divide(sum_bck.double_list(sum_bck.sys_up),blk_values) + 1
+        sys_down = safe_divide(sum_bck.double_list(sum_bck.sys_down),blk_values) +1
+        
         block_bin = sum_bck.block_bins
         axs[1].fill_between(block_bin,sys_up,sys_down, color='blue', alpha=.25)
         axs[1].fill_between(block_bin,blk_std+1,1-blk_std, color='black', alpha=.25)

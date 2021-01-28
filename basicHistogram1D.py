@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import mplhep as hep
 import numpy as np
 import uproot
+import sys
+sys.path.append('./src')
+from uproot_plotting_tools.utils import safe_divide
 
 # no overflow
 # systematics are sorted based on net negative or positive to down/up
@@ -117,10 +120,10 @@ class basicHistogram1D:
     def divide(self, bh1d):
         assert self.shares_bins(bh1d), "Bin alignment error!"
         denom =  bh1d.bin_values
-        self.bin_values = self.bin_values/denom
-        self.bin_std = self.bin_std/denom
-        self.sys_up = self.sys_up/denom
-        self.sys_down = self.sys_down/denom
+        self.bin_values = safe_divide(self.bin_values, denom)
+        self.bin_std = safe_divide(self.bin_std, denom)
+        self.sys_up = safe_divide(self.sys_up, denom)
+        self.sys_down = safe_divide(self.sys_down, denom)
     def scale(self,factor):
         self.bin_values = factor*self.bin_values
         self.bin_std = factor*self.bin_std

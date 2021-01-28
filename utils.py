@@ -14,3 +14,6 @@ def get_hist_uproot(uproot_dir, hname, overflow=False):
     return {"bins":bins, "values":values, "var":var}
 
 def hist_integral_and_error(x): return (np.sum(x['values']), np.sum(x['var']) ** .5)
+
+def safe_divide(a,b):
+    return np.divide(a, b, out=np.zeros_like(a), where=b!=0)
