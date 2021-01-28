@@ -26,9 +26,9 @@ class basicHistogram1D:
         #add in sys
         self.has_sys = len(sys_values) > 0
         #only computer systematics if bin has set values
+        self.sys_up = self.zero_array()
+        self.sys_down = self.zero_array()
         if self.has_sys:
-            self.sys_up = self.zero_array()
-            self.sys_down = self.zero_array()
             for sys in sys_values:
                 self.add_sys(sys)
     @classmethod
