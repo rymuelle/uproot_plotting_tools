@@ -14,10 +14,8 @@ class basicHistogram1D:
         self.name = name
         self.category = category #typically, background, signal, data etc...
         self.plot_kwargs = plot_kwargs
-        if 'color' in self.plot_kwargs:
-            self.color = self.plot_kwargs['color']
-        else:
-            self.color = 'black'
+        self.color = self.set_default('color','black')
+        self.label = self.set_default('label',None)
         self.bin_edges = bin_edges
         self.n_bins = len(bin_edges) - 1
         #set bin values
@@ -31,6 +29,9 @@ class basicHistogram1D:
         if self.has_sys:
             for sys in sys_values:
                 self.add_sys(sys)
+    def set_default(self,key,default):
+        if key not in self.plot_kwargs: return default
+        return self.plot_kwargs[key]
     @classmethod
     def from_uproot(cls,name,uproot_hist,uproot_sys=[],plot_kwargs={},category=None):
         bin_edges,values,std = cls.get_hist_uproot(cls,uproot_hist)
@@ -92,12 +93,16 @@ class basicHistogram1D:
     @property
     def block_bins(self):
         return self.double_list(self.bin_edges)[1:-1]
-    def add(self,bh1d):
+    def add(self, bh1d, inherits=False):
         assert self.shares_bins(bh1d), "Bin alignment error!"
         self.bin_values += bh1d.bin_values
         self.bin_variance += bh1d.bin_variance
         self.sys_up += bh1d.sys_up
         self.sys_down += bh1d.sys_down
+        if inherits:
+            self.category = bh1d.category
+            self.plot_kwargs = bh1d.plot_kwargs
+            self.color = bh1d.color
     def shares_bins(self,bh1d):
         return self.bin_edges == bh1d.bin_edges
 
