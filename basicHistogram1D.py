@@ -38,7 +38,7 @@ class basicHistogram1D:
             for sys in sys_values:
                 self.add_sys(sys)
     @classmethod
-    def from_uproot(name,uproot_hist,uproot_sys=[],plot_kwargs={}):
+    def from_uproot(cls,name,uproot_hist,uproot_sys=[],plot_kwargs={}):
         bins,values,std = self.get_hist_uproot(uproot_hist)
         sys_list = []
         for sys in uproot_sys:
