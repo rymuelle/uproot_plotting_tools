@@ -90,7 +90,7 @@ class basicHistogram1D:
         if self.check_sys:
             self.sys_up_block = self.double_list(self.sys_up+self.bin_values)
             self.sys_down_block = self.double_list(self.sys_down+self.bin_values)
-            self.tmp_kwargs = {"alpha":.3,"color":self.color,**kwargs}
+            self.tmp_kwargs = {"color":self.color,**kwargs}
             if "ax" in  self.tmp_kwargs:
                 self.tmp_kwargs.pop("ax",None)
                 kwargs['ax'].fill_between(self.block_bins,self.sys_up_block,self.sys_down_block, **self.tmp_kwargs)
