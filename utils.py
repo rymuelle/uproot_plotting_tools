@@ -17,3 +17,5 @@ def hist_integral_and_error(x): return (np.sum(x['values']), np.sum(x['var']) **
 
 def safe_divide(a,b):
     return np.divide(a, b, out=np.zeros_like(a), where=b!=0)
+
+def average_list_pairs(l_list): return [(l_list[i] + l_list[i+1])/2 for i in range(len(l_list)-1)]
