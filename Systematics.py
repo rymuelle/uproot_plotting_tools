@@ -1,15 +1,17 @@
 import numpy as np
+from copy import deepcopy
 
 class Systematics:
     '''
     Simple helper class to manage systematics.
     Systematics are added linearly or in quadrature. In quadrature may result in funny behavior as sign information is lost.
     '''
-    def __init__(self):
-        self._sys_up = []
-        self._sys_down = []
-        self._sys_name = []
+    def __init__(self,name=[],down=[],up=[]):
+        self._sys_name = deepcopy(name)
+        self._sys_down = deepcopy(down)
+        self._sys_up = deepcopy(up)
     def total_sys(self, sys, in_quad=0):
+        sys = deepcopy(sys)
         if not in_quad:
             return np.sum(sys,axis=0)
         else:
@@ -31,6 +33,11 @@ class Systematics:
         self._sys_name.append(name)
         self._sys_down.append(down)
         self._sys_up.append(up)
+    def add(self,syst):
+        name = list(self._sys_name)+list(syst._sys_name)
+        down = list(self._sys_down)+list(syst._sys_down)
+        up = list(self._sys_up)+list(syst._sys_up)
+        return Systematics(name=name,down=down,up=up)
     def __repr__(self):
         return "{} down: {} up: {}".format(self._sys_name, np.sum(self.sys_down()), np.sum(self.sys_up()) )
     def __str__(self):
@@ -38,9 +45,7 @@ class Systematics:
 
 if __name__=="__main__":
     syst = Systematics()
-
     syst_down = [-1,-2,3]
     syst_up = [1,2,-3]
-
     syst.add_sys("test1", syst_up, syst_down)
     assert syst == "['test1'] down: -6 up: 6"
